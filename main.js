@@ -1,6 +1,6 @@
 const { app, BrowserWindow } = require('electron');
 
-const APP_URL = 'https://799342382.github.io/live-gifts/#home';
+const HOME_URL = 'https://799342382.github.io/live-gifts/#home';
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -13,21 +13,44 @@ function createWindow() {
     }
   });
 
-  win.loadURL(APP_URL);
+  // 顶部导航栏
+  const navBar = `
+    <div style="
+      width:100%;
+      height:50px;
+      background:#111827;
+      display:flex;
+      align-items:center;
+      padding:0 10px;
+      gap:10px;
+      box-sizing:border-box;
+      position:fixed;
+      top:0;
+      left:0;
+      z-index:9999;
+    ">
+      <button onclick="history.back()">← 返回</button>
+      <button onclick="history.forward()">→ 前进</button>
+      <button onclick="location.reload()">⟳ 刷新</button>
+      <button onclick="location.href='${HOME_URL}'">🏠 首页</button>
+    </div>
+    <iframe 
+      id="app"
+      src="${HOME_URL}"
+      style="
+        position:fixed;
+        top:50px;
+        left:0;
+        width:100%;
+        height:calc(100% - 50px);
+        border:none;
+      "
+    ></iframe>
+  `;
 
-  // 所有新窗口都在软件内部打开
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    win.loadURL(url);
-    return { action: 'deny' };
-  });
-
-  // 页面跳转保持在软件内部
-  win.webContents.on('will-navigate', (event, url) => {
-    if (url !== win.webContents.getURL()) {
-      event.preventDefault();
-      win.loadURL(url);
-    }
-  });
+  win.loadURL(
+    'data:text/html;charset=utf-8,' + encodeURIComponent(navBar)
+  );
 }
 
 app.whenReady().then(createWindow);
