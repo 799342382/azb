@@ -1,16 +1,12 @@
-const { app, BrowserWindow, shell } = require("electron");
+```js id="i0mx43"
+const { app, BrowserWindow } = require("electron");
 
-// 把下面这行改成你的网页链接（你现在这个链接我已帮你填好）
 const APP_URL = "https://799342382.github.io/live-gifts/#home";
-
-// 这里是你的主域名（一般不用改；如果你换了域名再改）
-const ALLOW_ORIGIN = "https://799342382.github.io";
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    show: true,
+    width: 1400,
+    height: 900,
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: false,
@@ -20,18 +16,17 @@ function createWindow() {
 
   win.loadURL(APP_URL);
 
+  // 所有新窗口都在当前软件内部打开
   win.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    win.loadURL(url);
     return { action: "deny" };
   });
 
+  // 页面跳转也保持在软件内部
   win.webContents.on("will-navigate", (event, url) => {
-    const current = win.webContents.getURL();
-    const isSame = url === current;
-    const isAllow = url.startsWith(ALLOW_ORIGIN) || url.startsWith("file:");
-    if (!isSame && !isAllow) {
+    if (url !== win.webContents.getURL()) {
       event.preventDefault();
-      shell.openExternal(url);
+      win.loadURL(url);
     }
   });
 }
@@ -39,9 +34,8 @@ function createWindow() {
 app.whenReady().then(createWindow);
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
 });
-
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
-});
+```
