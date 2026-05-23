@@ -1,7 +1,6 @@
-```js id="i0mx43"
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow } = require('electron');
 
-const APP_URL = "https://799342382.github.io/live-gifts/#home";
+const APP_URL = 'https://799342382.github.io/live-gifts/#home';
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -16,14 +15,14 @@ function createWindow() {
 
   win.loadURL(APP_URL);
 
-  // 所有新窗口都在当前软件内部打开
+  // 所有新窗口都在软件内部打开
   win.webContents.setWindowOpenHandler(({ url }) => {
     win.loadURL(url);
-    return { action: "deny" };
+    return { action: 'deny' };
   });
 
-  // 页面跳转也保持在软件内部
-  win.webContents.on("will-navigate", (event, url) => {
+  // 页面跳转保持在软件内部
+  win.webContents.on('will-navigate', (event, url) => {
     if (url !== win.webContents.getURL()) {
       event.preventDefault();
       win.loadURL(url);
@@ -33,9 +32,8 @@ function createWindow() {
 
 app.whenReady().then(createWindow);
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
     app.quit();
   }
 });
-```
