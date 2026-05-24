@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI工具箱</title>
+  <style>
+    :root{
+      --bg:#0b0f19;
+      --panel:#0f172a;
+      --panel2:#111827;
+      --line:rgba(255,255,255,.08);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.62);
+      --btn:rgba(255,255,255,.10);
+      --btn2:rgba(255,255,255,.16);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+    .app{height:100%;display:flex;flex-direction:column}
+    .topbar{
+      height:52px;flex:0 0 52px;
+      display:flex;align-items:center;gap:10px;
+      padding:10px 10px;
+      background:linear-gradient(180deg,var(--panel),var(--panel2));
+      border-bottom:1px solid var(--line);
+      -webkit-app-region:drag;
+      user-select:none;
+    }
+    .group{display:flex;align-items:center;gap:8px;-webkit-app-region:no-drag}
+    .title{
+      display:flex;align-items:center;gap:8px;
+      padding:0 10px;height:32px;border-radius:10px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      color:var(--text);
+      font-size:13px;
+      max-width:420px;
+      overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+    }
+    .dot{width:8px;height:8px;border-radius:999px;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.15)}
+    button{
+      height:32px;min-width:36px;
+      padding:0 10px;border-radius:10px;
+      border:1px solid var(--line);
+      background:var(--btn);
+      color:var(--text);
+      cursor:pointer;
+      transition:.15s;
+    }
+    button:hover{background:var(--btn2)}
+    button:active{transform:translateY(1px)}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .search{
+      display:flex;align-items:center;gap:8px;
+      height:32px;padding:0 10px;border-radius:10px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      -webkit-app-region:no-drag;
+      flex:1;
+      min-width:240px;
+    }
+    .search input{
+      width:100%;height:28px;border:0;outline:0;
+      background:transparent;color:var(--text);
+      font-size:13px;
+    }
+    .badge{
+      height:22px;display:flex;align-items:center;
+      padding:0 8px;border-radius:999px;
+      border:1px solid var(--line);
+      color:var(--muted);
+      font-size:12px;
+    }
+    .winbtns button{min-width:38px}
+    .winbtns .close:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.35)}
+    .content{position:relative;flex:1}
+    webview{width:100%;height:100%;display:block;background:var(--bg)}
+    .overlay{
+      position:absolute;inset:0;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(11,15,25,.80);
+      backdrop-filter:blur(10px);
+      opacity:0;pointer-events:none;
+      transition:.2s;
+    }
+    .overlay.show{opacity:1;pointer-events:auto}
+    .card{
+      width:min(520px,92vw);
+      border-radius:18px;
+      padding:18px 18px 14px;
+      border:1px solid var(--line);
+      background:rgba(15,23,42,.60);
+      box-shadow:0 20px 60px rgba(0,0,0,.35);
+    }
+    .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .h{font-size:15px;font-weight:700}
+    .p{margin-top:8px;color:var(--muted);font-size:13px;line-height:1.5}
+    .spin{
+      width:18px;height:18px;border-radius:999px;
+      border:2px solid rgba(255,255,255,.25);
+      border-top-color:rgba(255,255,255,.9);
+      animation:spin .8s linear infinite;
+      margin-right:10px;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .toast{
+      position:absolute;left:50%;bottom:18px;transform:translateX(-50%);
+      background:rgba(17,24,39,.88);
+      border:1px solid var(--line);
+      color:var(--text);
+      padding:10px 12px;border-radius:12px;
+      font-size:13px;
+      opacity:0;pointer-events:none;
+      transition:.2s;
+      max-width:min(520px,92vw);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .toast.show{opacity:1}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="group">
+        <button id="back" title="后退">←</button>
+        <button id="forward" title="前进">→</button>
+        <button id="reload" title="刷新">⟳</button>
+        <button id="home" title="回到主页">🏠</button>
+      </div>
+
+      <div class="title" title="AI工具箱">
+        <span class="dot" id="netdot"></span>
+        <span id="titleText">AI工具箱</span>
+      </div>
+
+      <div class="search" title="页面内搜索（按 Ctrl+F / Ctrl+K 也行）">
+        <span style="color:var(--muted);font-size:12px;">搜索</span>
+        <input id="q" placeholder="在当前页面找文字（回车搜索）" />
+        <span class="badge" id="count">0</span>
+        <button id="prev" title="上一个">↑</button>
+        <button id="next" title="下一个">↓</button>
+        <button id="clear" title="清空">×</button>
+      </div>
+
+      <div class="group winbtns">
+        <button id="min" title="最小化">—</button>
+        <button id="max" title="最大化/还原">▢</button>
+        <button id="close" class="close" title="关闭">✕</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <webview id="wv"></webview>
+
+      <div class="overlay show" id="overlay">
+        <div class="card">
+          <div class="row">
+            <div class="row" style="justify-content:flex-start">
+              <div class="spin"></div>
+              <div class="h" id="ovTitle">正在加载…</div>
+            </div>
+            <button id="retry" style="display:none">重试</button>
+          </div>
+          <div class="p" id="ovText">第一次打开会慢一点，等它加载完成就很顺。</div>
+        </div>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const HOME_URL = params.get("home") || "https://799342382.github.io/live-gifts/#home";
+
+    const wv = document.getElementById("wv");
+    const overlay = document.getElementById("overlay");
+    const retryBtn = document.getElementById("retry");
+    const ovTitle = document.getElementById("ovTitle");
+    const ovText = document.getElementById("ovText");
+    const toast = document.getElementById("toast");
+    const netdot = document.getElementById("netdot");
+
+    const backBtn = document.getElementById("back");
+    const forwardBtn = document.getElementById("forward");
+    const reloadBtn = document.getElementById("reload");
+    const homeBtn = document.getElementById("home");
+
+    const q = document.getElementById("q");
+    const count = document.getElementById("count");
+    const prevBtn = document.getElementById("prev");
+    const nextBtn = document.getElementById("next");
+    const clearBtn = document.getElementById("clear");
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=>toast.classList.remove("show"), 1600);
+    }
+
+    function setOverlay(on, title, text, canRetry){
+      if(on){
+        overlay.classList.add("show");
+        ovTitle.textContent = title || "正在加载…";
+        ovText.textContent = text || "";
+        retryBtn.style.display = canRetry ? "inline-flex" : "none";
+      }else{
+        overlay.classList.remove("show");
+      }
+    }
+
+    function refreshNavState(){
+      try{
+        backBtn.disabled = !wv.canGoBack();
+        forwardBtn.disabled = !wv.canGoForward();
+      }catch(_){}
+    }
+
+    // webview
+    wv.setAttribute("src", HOME_URL);
+    wv.setAttribute("allowpopups", "true");
+
+    // 顶部按钮
+    backBtn.onclick = () => { try{ wv.goBack(); }catch(_){} };
+    forwardBtn.onclick = () => { try{ wv.goForward(); }catch(_){} };
+    reloadBtn.onclick = () => { try{ wv.reload(); showToast("正在刷新"); }catch(_){} };
+    homeBtn.onclick = () => { try{ wv.loadURL(HOME_URL); showToast("回到主页"); }catch(_){} };
+
+    // 窗口按钮
+    document.getElementById("min").onclick = () => window.APP.minimize();
+    document.getElementById("max").onclick = () => window.APP.toggleMaximize();
+    document.getElementById("close").onclick = () => window.APP.close();
+
+    // 网络状态
+    function updateNet(){
+      const ok = navigator.onLine;
+      netdot.style.background = ok ? "#22c55e" : "#ef4444";
+      netdot.style.boxShadow = ok ? "0 0 0 3px rgba(34,197,94,.15)" : "0 0 0 3px rgba(239,68,68,.15)";
+      if(!ok){
+        setOverlay(true, "网络断开", "请检查网络后点“重试”。", true);
+      }
+    }
+    window.addEventListener("online", () => { updateNet(); showToast("网络已恢复"); setOverlay(false); });
+    window.addEventListener("offline", updateNet);
+    updateNet();
+
+    // 载入体验
+    setOverlay(true, "正在加载…", "第一次打开会慢一点，等它加载完成就很顺。", false);
+
+    wv.addEventListener("did-start-loading", () => {
+      setOverlay(true, "正在加载…", "正在进入工具箱。", false);
+    });
+
+    wv.addEventListener("did-stop-loading", () => {
+      setOverlay(false);
+      refreshNavState();
+    });
+
+    wv.addEventListener("did-fail-load", () => {
+      setOverlay(true, "加载失败", "可能是网络问题，点“重试”。", true);
+    });
+
+    wv.addEventListener("dom-ready", () => {
+      refreshNavState();
+    });
+
+    wv.addEventListener("did-navigate-in-page", refreshNavState);
+    wv.addEventListener("did-navigate", refreshNavState);
+
+    retryBtn.onclick = () => {
+      if(!navigator.onLine){
+        showToast("现在没网");
+        return;
+      }
+      setOverlay(true, "正在重试…", "请稍等。", false);
+      try{ wv.reload(); }catch(_){}
+    };
+
+    // 页面内搜索
+    let lastQuery = "";
+    function doFind(text, forward=true){
+      if(!text) return;
+      try{
+        wv.findInPage(text, { forward, findNext: text === lastQuery });
+        lastQuery = text;
+      }catch(_){}
+    }
+
+    q.addEventListener("keydown", (e) => {
+      if(e.key === "Enter"){
+        doFind(q.value.trim(), true);
+      }
+    });
+
+    nextBtn.onclick = () => doFind(q.value.trim(), true);
+    prevBtn.onclick = () => doFind(q.value.trim(), false);
+    clearBtn.onclick = () => {
+      q.value = "";
+      count.textContent = "0";
+      lastQuery = "";
+      try{ wv.stopFindInPage("clearSelection"); }catch(_){}
+      showToast("已清空");
+    };
+
+    wv.addEventListener("found-in-page", (e) => {
+      if(typeof e.result?.matches === "number"){
+        count.textContent = String(e.result.matches);
+      }
+    });
+
+    // 快捷键：Ctrl+F / Ctrl+K 聚焦搜索
+    window.addEventListener("keydown", (e) => {
+      const isCtrl = e.ctrlKey || e.metaKey;
+      if(isCtrl && (e.key.toLowerCase() === "f" || e.key.toLowerCase() === "k")){
+        e.preventDefault();
+        q.focus();
+        q.select();
+      }
+    });
+  </script>
+</body>
+</html>

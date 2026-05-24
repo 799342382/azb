@@ -1,6 +1,6 @@
 {
   "name": "ai-toolbox-desktop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "main.js",
   "private": true,
   "scripts": {
@@ -14,20 +14,26 @@
   "build": {
     "appId": "com.guojin.aitoolbox",
     "productName": "AI工具箱",
+    "asar": true,
     "directories": {
       "output": "dist"
     },
     "files": [
-      "main.js"
+      "main.js",
+      "preload.js",
+      "app/**"
     ],
     "win": {
       "target": [
         "nsis"
-      ]
+      ],
+      "artifactName": "AI工具箱-安装包-${version}-setup.${ext}"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     },
     "publish": null
   }
